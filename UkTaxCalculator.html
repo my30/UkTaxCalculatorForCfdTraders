@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UK Tax Calculator for CFD Traders</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        .calculator {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: #f8f9fa;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .results {
+            display: none;
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        .calculation-steps {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #eaeaea;
+        }
+        h2 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 12px;
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .step {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .step:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .step-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        .tax-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+        .total {
+            font-weight: bold;
+            font-size: 18px;
+            padding: 15px 0;
+            border-top: 2px solid #3498db;
+            margin-top: 10px;
+        }
+        .note {
+            font-size: 14px;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        .exchange-rate {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .input-row {
+            display: flex;
+            gap: 20px;
+        }
+        .input-row > div {
+            flex: 1;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .result-value {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>UK Tax Calculator for Full-Time CFD Traders</h1>
+    
+    <div class="calculator">
+        <div class="input-row">
+            <div class="input-group">
+                <label for="income">Annual Trading Income:</label>
+                <input type="number" id="income" min="0" step="0.01" placeholder="Enter amount">
+            </div>
+            
+            <div class="input-group">
+                <label for="expenses">Business Expenses:</label>
+                <input type="number" id="expenses" min="0" step="0.01" placeholder="Enter amount">
+            </div>
+        </div>
+        
+        <div class="input-row">
+            <div class="input-group">
+                <label for="currency">Income Currency:</label>
+                <select id="currency">
+                    <option value="GBP">GBP (£)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="expense-currency">Expense Currency:</label>
+                <select id="expense-currency">
+                    <option value="GBP">GBP (£)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                </select>
+            </div>
+        </div>
+        
+        <button id="calculate">Calculate Tax</button>
+    </div>
+    
+    <div class="results" id="results">
+        <div class="currency-selector">
+            <span>Display results in:</span>
+            <select id="display-currency">
+                <option value="GBP">GBP (£)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+            </select>
+            <span id="exchange-rate-info" class="exchange-rate"></span>
+        </div>
+        
+        <div class="calculation-steps" id="uk-results">
+            <h2>UK Tax Calculation Breakdown</h2>
+            <div id="calculation-breakdown"></div>
+            
+            <div class="total">
+                <div class="result-item">
+                    <span>Total Tax:</span>
+                    <span id="uk-total-tax" class="result-value"></span>
+                </div>
+                <div class="result-item">
+                    <span>Take-home Amount:</span>
+                    <span id="uk-takehome" class="result-value"></span>
+                </div>
+            </div>
+            
+            <div class="result-item">
+                <span>Tax Savings from Expenses:</span>
+                <span id="uk-expense-savings" class="result-value"></span>
+            </div>
+        </div>
+        
+        <div class="note">
+            <p><strong>Note:</strong> Calculations assume you're a full-time CFD trader taxed as self-employed. Expenses must be "wholly and exclusively" for business purposes to be deductible. Personal Allowance (£12,570) reduces by £1 for every £2 earned over £100,000. Tax rates for 2025/26: 20% basic rate, 40% higher rate, 45% additional rate.</p>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const incomeInput = document.getElementById('income');
+        const expensesInput = document.getElementById('expenses');
+        const currencySelect = document.getElementById('currency');
+        const expenseCurrencySelect = document.getElementById('expense-currency');
+        const displayCurrencySelect = document.getElementById('display-currency');
+        const calculateBtn = document.getElementById('calculate');
+        const resultsDiv = document.getElementById('results');
+        const calculationBreakdown = document.getElementById('calculation-breakdown');
+        const ukTotalTax = document.getElementById('uk-total-tax');
+        const ukTakehome = document.getElementById('uk-takehome');
+        const ukExpenseSavings = document.getElementById('uk-expense-savings');
+        const exchangeRateInfo = document.getElementById('exchange-rate-info');
+        
+        // Tax brackets 2025/26
+        const UK_BRACKETS = [
+            { max: 12570, rate: 0.00, name: "Personal Allowance" },
+            { max: 50270, rate: 0.20, name: "Basic Rate" },
+            { max: 125140, rate: 0.40, name: "Higher Rate" },
+            { max: Infinity, rate: 0.45, name: "Additional Rate" }
+        ];
+        
+        // Exchange rates (initial placeholder values)
+        let exchangeRates = {
+            USD: 1,
+            GBP: 0.785,
+            EUR: 0.93
+        };
+        
+        // Fetch live exchange rates
+        async function fetchExchangeRates() {
+            try {
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                exchangeRates = {
+                    USD: 1,
+                    GBP: data.rates.GBP,
+                    EUR: data.rates.EUR
+                };
+                updateExchangeRateInfo();
+            } catch (error) {
+                console.error('Failed to fetch exchange rates. Using defaults:', error);
+            }
+        }
+        
+        // Update exchange rate info display
+        function updateExchangeRateInfo() {
+            const displayCurrency = displayCurrencySelect.value;
+            const rates = exchangeRates;
+            
+            let info = `1 USD = ${rates.EUR.toFixed(4)} EUR | `;
+            info += `1 USD = ${rates.GBP.toFixed(4)} GBP`;
+            
+            if (displayCurrency !== 'USD') {
+                info += ` | 1 ${displayCurrency} = ${(1 / rates[displayCurrency]).toFixed(4)} USD`;
+            }
+            
+            exchangeRateInfo.textContent = info;
+        }
+        
+        // Convert amount to display currency
+        function convertToDisplayCurrency(amount, fromCurrency) {
+            const displayCurrency = displayCurrencySelect.value;
+            
+            // Convert to USD first
+            const amountUSD = amount / exchangeRates[fromCurrency];
+            
+            // Convert to display currency
+            return amountUSD * exchangeRates[displayCurrency];
+        }
+        
+        // Format currency
+        function formatCurrency(amount, currency) {
+            const symbols = {
+                USD: '$',
+                GBP: '£',
+                EUR: '€'
+            };
+            
+            return `${symbols[currency]}${amount.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            })}`;
+        }
+        
+        // Calculate UK taxes with detailed breakdown
+        function calculateUKTax(incomeGBP, expensesGBP) {
+            // Step 1: Calculate taxable profit
+            const grossProfit = incomeGBP;
+            const taxableProfit = Math.max(0, incomeGBP - expensesGBP);
+            
+            // Step 2: Calculate personal allowance reduction
+            let personalAllowance = 12570;
+            if (taxableProfit > 100000) {
+                const reduction = Math.floor((taxableProfit - 100000) / 2);
+                personalAllowance = Math.max(0, personalAllowance - reduction);
+            }
+            
+            // Step 3: Calculate tax without expenses for comparison
+            let taxWithoutExpenses = 0;
+            let remaining = incomeGBP;
+            let prevThreshold = 0;
+            
+            for (const bracket of UK_BRACKETS) {
+                if (remaining <= 0) break;
+                
+                const taxableAmount = Math.min(remaining, bracket.max - prevThreshold);
+                taxWithoutExpenses += taxableAmount * bracket.rate;
+                remaining -= taxableAmount;
+                prevThreshold = bracket.max;
+            }
+            
+            // Step 4: Calculate tax with expenses
+            let totalTax = 0;
+            const breakdown = [];
+            let remainingTaxable = taxableProfit;
+            let taxBands = [];
+            let prevBandEnd = 0;
+            
+            // Apply personal allowance
+            const taxableAfterAllowance = Math.max(0, taxableProfit - personalAllowance);
+            remainingTaxable = taxableAfterAllowance;
+            
+            for (const bracket of UK_BRACKETS) {
+                if (remainingTaxable <= 0) break;
+                
+                const bracketMax = bracket.max;
+                const bracketRate = bracket.rate;
+                const taxableInBand = Math.min(remainingTaxable, bracketMax - prevBandEnd);
+                
+                if (taxableInBand <= 0) continue;
+                
+                const taxInBand = taxableInBand * bracketRate;
+                totalTax += taxInBand;
+                
+                taxBands.push({
+                    range: bracket.max === Infinity ? 
+                        `Above £${formatNumber(prevBandEnd)}` : 
+                        `£${formatNumber(prevBandEnd)} - £${formatNumber(prevBandEnd + taxableInBand)}`,
+                    rate: bracketRate,
+                    amount: taxableInBand,
+                    tax: taxInBand,
+                    name: bracket.name
+                });
+                
+                remainingTaxable -= taxableInBand;
+                prevBandEnd = bracketMax;
+            }
+            
+            const takehome = taxableProfit - totalTax;
+            
+            return {
+                grossProfit,
+                taxableProfit,
+                personalAllowance,
+                taxBands,
+                totalTax,
+                takehome,
+                taxWithoutExpenses
+            };
+        }
+        
+        // Display UK results with detailed breakdown
+        function displayUKResults(result, incomeGBP, expensesGBP, displayCurrency) {
+            calculationBreakdown.innerHTML = '';
+            
+            // Step 1: Gross Income
+            const grossDisplay = convertToDisplayCurrency(result.grossProfit, 'GBP');
+            const step1 = document.createElement('div');
+            step1.className = 'step';
+            step1.innerHTML = `
+                <div class="step-header">Step 1: Gross Trading Income</div>
+                <div class="result-item">
+                    <span>Total Income:</span>
+                    <span>${formatCurrency(grossDisplay, displayCurrency)}</span>
+                </div>
+            `;
+            calculationBreakdown.appendChild(step1);
+            
+            // Step 2: Business Expenses
+            const expensesDisplay = convertToDisplayCurrency(expensesGBP, 'GBP');
+            const step2 = document.createElement('div');
+            step2.className = 'step';
+            step2.innerHTML = `
+                <div class="step-header">Step 2: Deduct Business Expenses</div>
+                <div class="result-item">
+                    <span>Allowable Expenses:</span>
+                    <span>${formatCurrency(expensesDisplay, displayCurrency)}</span>
+                </div>
+            `;
+            calculationBreakdown.appendChild(step2);
+            
+            // Step 3: Taxable Profit
+            const taxableDisplay = convertToDisplayCurrency(result.taxableProfit, 'GBP');
+            const step3 = document.createElement('div');
+            step3.className = 'step';
+            step3.innerHTML = `
+                <div class="step-header">Step 3: Calculate Taxable Profit</div>
+                <div class="result-item">
+                    <span>Taxable Profit (Income - Expenses):</span>
+                    <span>${formatCurrency(taxableDisplay, displayCurrency)}</span>
+                </div>
+            `;
+            calculationBreakdown.appendChild(step3);
+            
+            // Step 4: Personal Allowance
+            const allowanceDisplay = convertToDisplayCurrency(result.personalAllowance, 'GBP');
+            const step4 = document.createElement('div');
+            step4.className = 'step';
+            step4.innerHTML = `
+                <div class="step-header">Step 4: Apply Personal Allowance</div>
+                <div class="result-item">
+                    <span>Personal Allowance:</span>
+                    <span>${formatCurrency(allowanceDisplay, displayCurrency)}</span>
+                </div>
+                <div class="result-item">
+                    <span>Taxable Income After Allowance:</span>
+                    <span>${formatCurrency(convertToDisplayCurrency(Math.max(0, result.taxableProfit - result.personalAllowance), 'GBP'), displayCurrency)}</span>
+                </div>
+            `;
+            calculationBreakdown.appendChild(step4);
+            
+            // Step 5: Tax Calculation
+            const step5 = document.createElement('div');
+            step5.className = 'step';
+            step5.innerHTML = '<div class="step-header">Step 5: Calculate Income Tax</div>';
+            
+            result.taxBands.forEach(band => {
+                const bandTaxDisplay = convertToDisplayCurrency(band.tax, 'GBP');
+                const bandAmountDisplay = convertToDisplayCurrency(band.amount, 'GBP');
+                const bandElement = document.createElement('div');
+                bandElement.className = 'result-item';
+                bandElement.innerHTML = `
+                    <span>${band.name} (${(band.rate * 100)}% on ${bandAmountDisplay}):</span>
+                    <span>${formatCurrency(bandTaxDisplay, displayCurrency)}</span>
+                `;
+                step5.appendChild(bandElement);
+            });
+            
+            calculationBreakdown.appendChild(step5);
+            
+            // Display results
+            const totalTaxDisplay = convertToDisplayCurrency(result.totalTax, 'GBP');
+            const takehomeDisplay = convertToDisplayCurrency(result.takehome, 'GBP');
+            const expenseSavings = convertToDisplayCurrency(result.taxWithoutExpenses - result.totalTax, 'GBP');
+            
+            ukTotalTax.textContent = formatCurrency(totalTaxDisplay, displayCurrency);
+            ukTakehome.textContent = formatCurrency(takehomeDisplay, displayCurrency);
+            ukExpenseSavings.textContent = formatCurrency(expenseSavings, displayCurrency);
+        }
+        
+        // Format numbers
+        function formatNumber(num) {
+            return num.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        // Main calculation function
+        async function calculateTaxes() {
+            const income = parseFloat(incomeInput.value) || 0;
+            const expenses = parseFloat(expensesInput.value) || 0;
+            const currency = currencySelect.value;
+            const expenseCurrency = expenseCurrencySelect.value;
+            
+            if (isNaN(income) || income < 0) {
+                alert("Please enter a valid income amount");
+                return;
+            }
+            
+            // Update exchange rates
+            await fetchExchangeRates();
+            
+            // Convert to GBP
+            let incomeGBP;
+            let expensesGBP;
+            
+            switch(currency) {
+                case 'USD':
+                    incomeGBP = income * exchangeRates.GBP;
+                    break;
+                case 'GBP':
+                    incomeGBP = income;
+                    break;
+                case 'EUR':
+                    incomeGBP = income * (exchangeRates.GBP / exchangeRates.EUR);
+                    break;
+            }
+            
+            switch(expenseCurrency) {
+                case 'USD':
+                    expensesGBP = expenses * exchangeRates.GBP;
+                    break;
+                case 'GBP':
+                    expensesGBP = expenses;
+                    break;
+                case 'EUR':
+                    expensesGBP = expenses * (exchangeRates.GBP / exchangeRates.EUR);
+                    break;
+            }
+            
+            // Calculate taxes
+            const ukResult = calculateUKTax(incomeGBP, expensesGBP);
+            
+            // Display results
+            const displayCurrency = displayCurrencySelect.value;
+            displayUKResults(ukResult, incomeGBP, expensesGBP, displayCurrency);
+            
+            // Show results
+            resultsDiv.style.display = 'block';
+        }
+        
+        // Event listeners
+        calculateBtn.addEventListener('click', calculateTaxes);
+        displayCurrencySelect.addEventListener('change', () => {
+            if (resultsDiv.style.display === 'block') {
+                calculateTaxes();
+            }
+        });
+        
+        // Initialize
+        fetchExchangeRates();
+    </script>
+</body>
+</html>
